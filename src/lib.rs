@@ -1,32 +1,22 @@
+use pronto_graphics::Window;
 use roc_std::RocStr;
 
-mod roc;
 mod glue;
-
-#[repr(u8)]
-#[allow(unused)]
-#[derive(Debug, Clone)]
-pub enum RocInit {
-    Windowed(u32, u32, RocStr),
-    Fullscreen,
-}
-
-extern "C" {
-    #[link_name = "roc__initForHost_1_exposed"]
-    fn init() -> RocInit;
-}
-
-extern "C" {
-    #[link_name = "roc__drawForHost_1_exposed"]
-    fn draw() -> ();
-}
+mod roc;
 
 #[no_mangle]
 pub extern "C" fn rust_main() -> i32 {
-    let init = unsafe { init() };
+    let glue::R1 { init, draw } = glue::mainForHost();
 
-    println!("{:?}", init);
+    let window = match init.discriminant() {
+        glue::discriminant_Init::Fullscreen => Window::new_fullscreen(),
+        glue::discriminant_Init::Windowed => {
+            let init = init.unwrap_Windowed();
+            Window::new(init.f0, init.f1, &init.f2.to_string())
+        }
+    };
 
-    // Exit code
-    0
+    loop {
+        
+    }
 }

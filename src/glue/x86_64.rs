@@ -17,6 +17,210 @@
 #![allow(clippy::clone_on_copy)]
 
 
+#[derive(Clone, Copy, Default, Debug, PartialEq, PartialOrd, )]
+#[repr(C)]
+struct DrawTask_Circle {
+    pub f0: f64,
+    pub f1: f64,
+    pub f2: f64,
+}
+
+#[derive(Clone, Copy, PartialEq, PartialOrd, Eq, Ord, Hash, )]
+#[repr(u8)]
+pub enum discriminant_DrawTask {
+    Circle = 0,
+    Square = 1,
+}
+
+impl core::fmt::Debug for discriminant_DrawTask {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::Circle => f.write_str("discriminant_DrawTask::Circle"),
+            Self::Square => f.write_str("discriminant_DrawTask::Square"),
+        }
+    }
+}
+
+#[repr(C, align(8))]
+pub union union_DrawTask {
+    Circle: DrawTask_Circle,
+    Square: DrawTask_Circle,
+}
+
+const _SIZE_CHECK_union_DrawTask: () = assert!(core::mem::size_of::<union_DrawTask>() == 32);
+const _ALIGN_CHECK_union_DrawTask: () = assert!(core::mem::align_of::<union_DrawTask>() == 8);
+
+const _SIZE_CHECK_DrawTask: () = assert!(core::mem::size_of::<DrawTask>() == 32);
+const _ALIGN_CHECK_DrawTask: () = assert!(core::mem::align_of::<DrawTask>() == 8);
+
+impl DrawTask {
+    /// Returns which variant this tag union holds. Note that this never includes a payload!
+    pub fn discriminant(&self) -> discriminant_DrawTask {
+        unsafe {
+            let bytes = core::mem::transmute::<&Self, &[u8; core::mem::size_of::<Self>()]>(self);
+
+            core::mem::transmute::<u8, discriminant_DrawTask>(*bytes.as_ptr().add(24))
+        }
+    }
+
+    /// Internal helper
+    fn set_discriminant(&mut self, discriminant: discriminant_DrawTask) {
+        let discriminant_ptr: *mut discriminant_DrawTask = (self as *mut DrawTask).cast();
+
+        unsafe {
+            *(discriminant_ptr.add(24)) = discriminant;
+        }
+    }
+}
+
+#[repr(C)]
+pub struct DrawTask {
+    payload: union_DrawTask,
+    discriminant: discriminant_DrawTask,
+}
+
+impl Clone for DrawTask {
+    fn clone(&self) -> Self {
+        use discriminant_DrawTask::*;
+
+        let payload = unsafe {
+            match self.discriminant {
+                Circle => union_DrawTask {
+                    Circle: self.payload.Circle.clone(),
+                },
+                Square => union_DrawTask {
+                    Square: self.payload.Square.clone(),
+                },
+            }
+        };
+
+        Self {
+            discriminant: self.discriminant,
+            payload,
+        }
+    }
+}
+
+impl core::fmt::Debug for DrawTask {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        use discriminant_DrawTask::*;
+
+        unsafe {
+            match self.discriminant {
+                Circle => {
+                    let field: &DrawTask_Circle = &self.payload.Circle;
+                    f.debug_tuple("DrawTask::Circle").field(field).finish()
+                },
+                Square => {
+                    let field: &DrawTask_Circle = &self.payload.Square;
+                    f.debug_tuple("DrawTask::Square").field(field).finish()
+                },
+            }
+        }
+    }
+}
+
+impl Eq for DrawTask {}
+
+impl PartialEq for DrawTask {
+    fn eq(&self, other: &Self) -> bool {
+        use discriminant_DrawTask::*;
+
+        if self.discriminant != other.discriminant {
+            return false;
+        }
+
+        unsafe {
+            match self.discriminant {
+                Circle => self.payload.Circle == other.payload.Circle,
+                Square => self.payload.Square == other.payload.Square,
+            }
+        }
+    }
+}
+
+impl Ord for DrawTask {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.partial_cmp(other).unwrap()
+    }
+}
+
+impl PartialOrd for DrawTask {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        use discriminant_DrawTask::*;
+
+        use std::cmp::Ordering::*;
+
+        match self.discriminant.cmp(&other.discriminant) {
+            Less => Option::Some(Less),
+            Greater => Option::Some(Greater),
+            Equal => unsafe {
+                match self.discriminant {
+                    Circle => self.payload.Circle.partial_cmp(&other.payload.Circle),
+                    Square => self.payload.Square.partial_cmp(&other.payload.Square),
+                }
+            },
+        }
+    }
+}
+
+impl core::hash::Hash for DrawTask {
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+        use discriminant_DrawTask::*;
+
+        unsafe {
+            match self.discriminant {
+                Circle => self.payload.Circle.hash(state),
+                Square => self.payload.Square.hash(state),
+            }
+        }
+    }
+}
+
+impl DrawTask {
+
+    pub fn unwrap_Circle(mut self) -> DrawTask_Circle {
+        debug_assert_eq!(self.discriminant, discriminant_DrawTask::Circle);
+        unsafe { self.payload.Circle }
+    }
+
+    pub fn is_Circle(&self) -> bool {
+        matches!(self.discriminant, discriminant_DrawTask::Circle)
+    }
+
+    pub fn unwrap_Square(mut self) -> DrawTask_Circle {
+        debug_assert_eq!(self.discriminant, discriminant_DrawTask::Square);
+        unsafe { self.payload.Square }
+    }
+
+    pub fn is_Square(&self) -> bool {
+        matches!(self.discriminant, discriminant_DrawTask::Square)
+    }
+}
+
+
+
+impl DrawTask {
+
+    pub fn Circle(payload: DrawTask_Circle) -> Self {
+        Self {
+            discriminant: discriminant_DrawTask::Circle,
+            payload: union_DrawTask {
+                Circle: payload,
+            }
+        }
+    }
+
+    pub fn Square(payload: DrawTask_Circle) -> Self {
+        Self {
+            discriminant: discriminant_DrawTask::Square,
+            payload: union_DrawTask {
+                Square: payload,
+            }
+        }
+    }
+}
+
 #[derive(Clone, Default, Debug, PartialEq, PartialOrd, Eq, Ord, Hash, )]
 #[repr(C)]
 struct Init_Windowed {
@@ -226,11 +430,11 @@ impl Drop for Init {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, PartialOrd, Eq, Ord, Hash, )]
+#[derive(Clone, Debug, PartialEq, PartialOrd, )]
 #[repr(C)]
 pub struct R1 {
+    pub draw: roc_std::RocList<DrawTask>,
     pub init: Init,
-    pub draw: (),
 }
 
 

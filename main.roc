@@ -2,7 +2,7 @@ platform "pronto"
     requires {} { main: { init : Init, draw : Draw } }
     exposes [Pronto]
     packages {}
-    imports [Pronto.{ Draw, Init }]
+    imports [Pronto.{ Init, Window, Draw }]
     provides [mainForHost]
 
 mainForHost = main
